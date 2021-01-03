@@ -1,1 +1,31 @@
 # algo_test
+## 2/Jan:
+- algogene runtime is too long
+  - difficult to operate and research strategy
+  - cannot fetch all the data to try out in Jupyter
+- backtrader (python module) is a possible choice
+  - can linked to interactive broker straight away
+  - language is messy though it is frequently maintained
+- zipline is still possibly the best
+  - maintained by quantopian, used to be the largest backtesting website
+  - problem: difficult to stream data
+- Quantconnect:
+  - great resources but costly, take time to run
+  - can paper trade
+## 3/Jan
+- Testing out Zipline
+  - Have to run on python 3.6
+  - conda create -n "your-name" python=3.6
+  - conda activate, blah, blah, blah..
+  - ipython kernel install --name "the name you want" --user
+  - still haven't figured out how to source bundle easily
+  - try downloading all the stock data from yahoo finance
+    - fail, too low RAM on laptop
+    - tried on google collab crash again
+    - dont' use this list of stock name from this page "https://investexcel.net/all-yahoo-finance-stock-tickers/"
+  - major problem today:
+    - too many stock exchange, don't know what data to target
+      - many companies are very small, and they are still listed, but have ZERO value
+      - These companies are most prevalent in PKL(Pink Sheet) not publicly listed on stock exchange
+    - tried quantconnect to scrap largest trading volume stock but the coarse universe doesn't allow scarping down name
+    - better way -> best scenario is to find the UNION of data of IBKR and Yahoo finance
