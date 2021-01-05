@@ -58,6 +58,14 @@
   - HFT setup is expensive
     - https://www.linkedin.com/pulse/how-much-money-would-cost-setup-high-frequency-trading-ariel-silahian/
 
-  
+## 5/Jan
+- Registering bundle on zipline if you do not have .zipline 
+  1. git clone https://github.com/aspromatis/zipline_bundle - somewhere in your computer
+  2. copy everything in extension.py from the repo above
+  3. find Users\<your name>\anaconda3\envs\env_zipline\Scripts\zipline-script.py (main thing is find zipline-script.py
+  4. paste the code from extension.py in the if statement that starts with (if __name__ == '__main__': ...) above the original expressions there. The imports go at the top of the file. 
+  5. change the path in csvdir_equities to the actual path where you cloned the repo
+  6. save zipline-script.py
+  7. in anaconda prompt, activate your environment, then $zipline ingest -b custom-bundle (or your bundle name)
   
   
