@@ -1,83 +1,89 @@
-#%%
 
-from zipline.api import (symbol, set_benchmark, order_target,
-                         schedule_function, time_rules,order_value,order, set_max_leverage)
-from zipline.finance import (commission,ledger)
-
+from zipline.api import *
+from scipy.stats import kendalltau
+from zipline.finance import (commission)
+from statsmodels.distributions.empirical_distribution import ECDF
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
 from zipline.api import order_target, record, symbol
 from zipline.finance import commission, slippage
+from statsmodels.genmod.families import family
+
+def find_Return(price):
+    ret = (price - price.shift(1))/price
+    ret = ret.drop(ret.index[0])
+    # fill the nan values with 0
+    ret = ret.fillna(value = 0)
+    return ret
+
+def _lpdf_copula(family, u, v,tau):
+
+    if  family == 'clayton':
+        theta = 2 * tau / (1 - tau)
+        pdf = (theta + 1) * ((u ** (-theta) + v ** (-theta) - 1) ** (-2 - 1 / theta)) * (u ** (-theta - 1) * v ** (-theta - 1))
+
+    elif family == 'gumbel':
+        theta = 1 / (1 - tau)
+        A = (-np.log(u)) ** theta + (-np.log(v)) ** theta
+        c = np.exp(-A ** (1 / theta))
+        pdf = c * (u * v) ** (-1) * (A ** (-2 + 2 / theta)) * ((np.log(u) * np.log(v)) ** (theta - 1)) * (1 + (theta - 1) * A ** (-1 / theta))
+        
+    return np.log(pdf)
 
 
 def initialize(context):
     
     
-    context.sym = symbol('AAPL')
-    context.i = 1000
+    context.sym = [symbol('ZNH'),symbol("CEA")]
+    context.day_count = 0
+    context.model = ""
 
-    print("HI")
-    # Explicitly set the commission/slippage to the "old" value until we can
-    # rebuild example data.
-    # github.com/quantopian/zipline/blob/master/tests/resources/
-    # rebuild_example_data#L105
     context.set_commission(commission.PerShare(cost=.0075, min_trade_cost=1.0))
     context.set_slippage(slippage.VolumeShareSlippage())
 
 
 def handle_data(context, data):
     # Skip first 300 days to get full windows
+    if context.day_count < 1000:
+        context.day_count +=1
+        return
+    if context.day_count <1001:
+        df = data.history(context.sym , "close", bar_count = context.day_count, frequency = "1d")
+        ret = find_Return(df)
+        ret_1 = ret.iloc[:,0]
+        ret_2 = ret.iloc[:,1]
+        ecdf_1 = ECDF(ret_1)
+        ecdf_2 = ECDF(ret_2)
+        tau_ = kendalltau(ret_1,ret_2)[0]
+
+        u = ecdf_1(ret_1)
+        v = ecdf_2(ret_2)
+        
+        clayton = _lpdf_copula("clayton", u, v,tau_) 
+        gumbel = _lpdf_copula("gumbel",u,v,tau_)
+        
+        context.model = "clayton" if clayton.sum() < gumbel.sum() else "gunbel"
+        
+        context.day_count +=1 
+        return
+
+
+    print(context.model)
     
-    order(context.sym,context.i)
-    print("Hi2")
-    print(context.account.net_leverage," ", context.account.leverage)
-    
 
-    # Compute averages
-    # history() has to be called with the same params
-    # from above and returns a pandas dataframe.
-    # short_mavg = data.history(context.sym, 'price', 100, '1d').mean()
-    # long_mavg = data.history(context.sym, 'price', 300, '1d').mean()
 
-    # # Trading logic
-    # if short_mavg > long_mavg:
-    #     # order_target orders as many shares as needed to
-    #     # achieve the desired number of shares.
-    #     order_target(context.sym, 100)
-    # elif short_mavg < long_mavg:
-    #     order_target(context.sym, 0)
-
-    # # Save values for later inspection
     record(AAPL=data.current(context.sym, "price"))
+    context.day_count += 1
+    pass
 
 
 
-# def analyze(context, perf):
-#     fig = plt.figure(figsize=(12,8))
-#     perf.algorithm_period_return.plot(x='strategy return', legend=True)
-#     perf.benchmark_period_return.plot(legend=True)
-#     plt.show()
-
-# start = pd.Timestamp('2000-11-18', tz='utc')
-# end = pd.Timestamp('2021-1-5', tz='utc')
-
-# # Fire off backtest
-# result = zipline.run_algorithm(
-#     start=start, # Set start
-#     end=end,  # Set end
-#     initialize=initialize, # Define startup function
-#     capital_base=100000000, # Set initial capital
-#     data_frequency = 'daily',  # Set data frequency
-#     bundle='custom-bundle' ) # Select bundle
-
-# print("Ready to analyze result.")
 
 #zipline run -f main.py -o test.csv -s 2000-11-18 -e 2021-1-5 -b custom-bundle --no-benchmark 
+#zipline run -f main.py -o test.csv -s 2000-11-18 -o result.pkl -e 2021-1-5 -b custom-bundle --no-benchmark 
 #zipline run -f main.py --data-frequency minute -o test1.csv -s 2000-11-18 -e 2021-1-5 -b minute-bundle --no-benchmark 
 
 
 
-
-# %%
