@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 dist = []
 
 ## replace the path before run
-path = "/Users/matthewchuang/Documents/GitHub/algo_test/datas/20210106/minute"
+path = "/Users/Magdalene/repos/trading/zipline_bundle/data/csvs/daily"
 
 for file in Path(path).iterdir():
     if file.is_file():
