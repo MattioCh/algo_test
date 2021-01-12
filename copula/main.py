@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from zipline.api import order_target, record, symbol, order_target_percent, set_max_leverage
+from zipline.api import order_target, record, symbol, order_target_percent, set_max_leverage,get_open_orders
 from zipline.finance import commission, slippage
 from statsmodels.genmod.families import family
 def find_Return(price):
@@ -57,10 +57,10 @@ def misprice_index(family, u, v, tau):
 def initialize(context):
     # set_max_leverage(3.3)
     context.capital_base =100000
-    context.sym = [symbol("ZNH"),symbol("CEA")]
+    context.sym = [symbol("NSC"),symbol("CSX")]
     context.day_count = 0
     context.model = ""
-    context.floor_CL = 0.1
+    context.floor_CL = 0.15
     context.cap_CL = 1 - context.floor_CL
     context.set_commission(commission.PerShare(cost=.0075, min_trade_cost=1.0))
     context.set_slippage(slippage.VolumeShareSlippage())
@@ -89,7 +89,7 @@ def handle_data(context, data):
         clayton = _lpdf_copula("clayton", u, v,tau_) 
         gumbel = _lpdf_copula("gumbel",u,v,tau_)
         
-        context.model = "clayton" if clayton.sum() < gumbel.sum() else "gumbel"
+        context.model = "clayton" if clayton.sum() > gumbel.sum() else "gumbel"
 
         # trading happens 
     elif context.day_count > 1000:
@@ -108,7 +108,7 @@ def handle_data(context, data):
         # Run linear regression over history return series 
         # return desired trading signal ratio (coefficient)
         # for every sym1 that is bought/sold, coef units of sym2 is sold/bought
-        coef = linregress(df).slope 
+        coef = linregress(ret_1,ret_2).slope 
 
         # Trading logic 
         
@@ -116,35 +116,53 @@ def handle_data(context, data):
         MI_u_v = misprice_index(context.model, u, v, tau_)
         MI_v_u = misprice_index(context.model, v, u, tau_)
         # Placing orders: if long is relatively underpriced, buy the pair
-        print(tau_)
-        print(u)
-        print(v)
-        print(MI_u_v)
-        print(MI_v_u)
+        # print("P1: ",df[-1,0])
+        # print("P2: ",df[-1,1])
+        # print("PNL: ", context.account.pnl)
+        # print(u)
+        # print(v)
+        # print(MI_u_v)
+        # print(MI_v_u)
         if context.leverage_flag == 0:
             if MI_u_v < context.floor_CL and MI_v_u > context.cap_CL:
                 #long u short v
-                short_pos = order_target_percent(context.sym[1], -0.2)
-                long_pos = order_target_percent(context.sym[0], 0.2 * coef)
+                long_pos = order_target_percent(context.sym[0], 0.2)
+                short_pos = order_target_percent(context.sym[1], -0.2 * coef)
                 print(-116)
 
             # Placing orders: if short is relatively underpriced, sell the pair
             elif MI_u_v > context.cap_CL and MI_v_u < context.floor_CL:
                 #short u long v
-                short_pos = order_target_percent(context.sym[0], -0.2 * coef)
-                long_pos = order_target_percent(context.sym[1], 0.2 )
+                long_pos = order_target_percent(context.sym[1], 0.2 * coef)
+                short_pos = order_target_percent(context.sym[0], -0.2 )
                 print(-123)
             else:
                 short_pos = order_target(context.sym[1], 0)
                 long_pos = order_target(context.sym[0], 0)
                 print(-127)
             context.leverage_flag = 1 if context.account.net_leverage > 3  else 0
+            pass
+
         else:
             if (MI_u_v > context.floor_CL and MI_v_u < context.cap_CL) or (MI_u_v > context.floor_CL and MI_v_u < context.cap_CL):
                 short_pos = order_target(context.sym[1], 0)
                 long_pos = order_target(context.sym[0], 0)
                 context.leverage_flag = 0 if context.account.net_leverage < 3 else 1
                 print(-137)
+                pass
+            pass
+        
+        print("P1: ",df.iloc[-1,0])
+        print("P2: ",df.iloc[-1,1])
+        print("PNL: ", context.portfolio.pnl)
+        print(u)
+        print(v)
+        print(MI_u_v)
+        print(MI_v_u) 
+        print(get_open_orders(context.sym[0]))
+        print(get_open_orders(context.sym[1]))
+
+        
             
     
     record(P1=data.current(context.sym[0], 'price'))
@@ -152,12 +170,8 @@ def handle_data(context, data):
 
 
     context.day_count+=1
-    #print(context.model)
+
     
-
-
-    #record(AAPL=data.current(context.sym, "price"))
-    # not using AAPL ticker here
     pass
 
 
