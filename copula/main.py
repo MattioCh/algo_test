@@ -1,24 +1,23 @@
 
 from zipline.api import *
+from zipline.finance import commission, slippage
 from scipy.stats import kendalltau
 from scipy.stats import linregress
 from zipline.finance import (commission)
 from statsmodels.distributions.empirical_distribution import ECDF
+import operator
+from statsmodels.genmod.families import family
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from zipline.api import order_target, record, symbol, order_target_percent, set_max_leverage,get_open_orders
-from zipline.finance import commission, slippage
-from statsmodels.genmod.families import family
 def find_Return(price):
     ret = (price - price.shift(1))/price
     ret = ret.drop(ret.index[0])
     # fill the nan values with 0
     ret = ret.fillna(value = 0)
     return ret
-
 def _lpdf_copula(family, u, v,tau):
 
     if  family == 'clayton':
@@ -32,20 +31,19 @@ def _lpdf_copula(family, u, v,tau):
         pdf = c * (u * v) ** (-1) * (A ** (-2 + 2 / theta)) * ((np.log(u) * np.log(v)) ** (theta - 1)) * (1 + (theta - 1) * A ** (-1 / theta))
         
     return np.log(pdf)
-
 def misprice_index(family, u, v, tau):
     # calculates the conditional probability of u given v
     if family == 'clayton':
-        U = u[-1]
-        V = v[-1]
+        U = u[-2:]
+        V = v[-2:]
         theta = 2 * tau / (1 - tau)
         cuv = (V ** (-theta - 1)) * (U ** (-theta) + V ** (-theta) - 1) ** (-1 / theta - 1)
 
         return cuv
     
     elif family == 'gumbel':
-        U = u[-1]
-        V = v[-1]
+        U = u[-2:]
+        V = v[-2:]
         theta = 1 / (1 - tau)
         A = (-np.log(U)) ** theta + (-np.log(V)) ** theta
         C = np.exp(-A ** (1 / theta))
@@ -53,6 +51,16 @@ def misprice_index(family, u, v, tau):
         cuv = C * (((- np.log(U))**theta + (-np.log(V))**theta) ** ((1-theta)/theta)) * (-np.log(V))**(theta-1) / V
     # misprice index of y given x = cvu   
         return cuv
+def compare_array_with_float(arr, int_, relate):
+    ops = {'>': operator.gt,
+           '<': operator.lt}
+    foo = True
+    for i in arr:
+        if not ops[relate](i,int_):
+            foo = False
+    return foo
+        
+
 
 def initialize(context):
     # set_max_leverage(3.3)
@@ -60,7 +68,7 @@ def initialize(context):
     context.sym = [symbol("NSC"),symbol("CSX")]
     context.day_count = 0
     context.model = ""
-    context.floor_CL = 0.15
+    context.floor_CL = 0.05
     context.cap_CL = 1 - context.floor_CL
     context.set_commission(commission.PerShare(cost=.0075, min_trade_cost=1.0))
     context.set_slippage(slippage.VolumeShareSlippage())
@@ -108,13 +116,16 @@ def handle_data(context, data):
         # Run linear regression over history return series 
         # return desired trading signal ratio (coefficient)
         # for every sym1 that is bought/sold, coef units of sym2 is sold/bought
-        coef = linregress(ret_1,ret_2).slope 
+        
+        # coef = linregress(df.iloc[-500:,:]).slope 
 
         # Trading logic 
         
         # Misprice index 
         MI_u_v = misprice_index(context.model, u, v, tau_)
         MI_v_u = misprice_index(context.model, v, u, tau_)
+
+        compare_array_with_float
         # Placing orders: if long is relatively underpriced, buy the pair
         # print("P1: ",df[-1,0])
         # print("P2: ",df[-1,1])
@@ -124,17 +135,17 @@ def handle_data(context, data):
         # print(MI_u_v)
         # print(MI_v_u)
         if context.leverage_flag == 0:
-            if MI_u_v < context.floor_CL and MI_v_u > context.cap_CL:
+            if compare_array_with_float(MI_u_v, context.floor_CL,"<") and compare_array_with_float(MI_v_u, context.cap_CL,">"):
                 #long u short v
-                long_pos = order_target_percent(context.sym[0], 0.2)
-                short_pos = order_target_percent(context.sym[1], -0.2 * coef)
+                long_pos = order_target_percent(context.sym[0], 0.4)
+                short_pos = order_target_percent(context.sym[1], -0.4 )
                 print(-116)
 
             # Placing orders: if short is relatively underpriced, sell the pair
-            elif MI_u_v > context.cap_CL and MI_v_u < context.floor_CL:
+            elif compare_array_with_float(MI_u_v, context.cap_CL,">") and compare_array_with_float(MI_v_u, context.floor_CL,"<"):
                 #short u long v
-                long_pos = order_target_percent(context.sym[1], 0.2 * coef)
-                short_pos = order_target_percent(context.sym[0], -0.2 )
+                long_pos = order_target_percent(context.sym[1], 0.4 )
+                short_pos = order_target_percent(context.sym[0], -0.4 )
                 print(-123)
             else:
                 short_pos = order_target(context.sym[1], 0)
@@ -144,7 +155,7 @@ def handle_data(context, data):
             pass
 
         else:
-            if (MI_u_v > context.floor_CL and MI_v_u < context.cap_CL) or (MI_u_v > context.floor_CL and MI_v_u < context.cap_CL):
+            if (MI_u_v[-1] > context.floor_CL and MI_v_u[-1] < context.cap_CL) or (MI_u_v[-1] > context.floor_CL and MI_v_u[-1] < context.cap_CL):
                 short_pos = order_target(context.sym[1], 0)
                 long_pos = order_target(context.sym[0], 0)
                 context.leverage_flag = 0 if context.account.net_leverage < 3 else 1
@@ -155,15 +166,20 @@ def handle_data(context, data):
         print("P1: ",df.iloc[-1,0])
         print("P2: ",df.iloc[-1,1])
         print("PNL: ", context.portfolio.pnl)
+        # print("coef:",coef)
         print(u)
         print(v)
         print(MI_u_v)
-        print(MI_v_u) 
-        print(get_open_orders(context.sym[0]))
-        print(get_open_orders(context.sym[1]))
+        print(MI_v_u)
 
-        
-            
+        order1 = get_open_orders(context.sym[0])
+        order2 = get_open_orders(context.sym[1])
+        print(order1)
+        print(order2)
+        if order1 != [] and order2 != []:
+            print("Amount:", order1[0]["amount"])
+            print("Amount:", order2[0]["amount"])
+                
     
     record(P1=data.current(context.sym[0], 'price'))
     record(P2=data.current(context.sym[1], 'price'))
@@ -173,6 +189,8 @@ def handle_data(context, data):
 
     
     pass
+
+
 
 
 
