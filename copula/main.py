@@ -51,6 +51,7 @@ def misprice_index(family, u, v, tau):
         cuv = C * (((- np.log(U))**theta + (-np.log(V))**theta) ** ((1-theta)/theta)) * (-np.log(V))**(theta-1) / V
     # misprice index of y given x = cvu   
         return cuv
+
 def compare_array_with_float(arr, int_, relate):
     ops = {'>': operator.gt,
            '<': operator.lt}
@@ -201,3 +202,5 @@ def handle_data(context, data):
 
 
 
+#zipline run -f main.py -o test7.csv -s 2000-11-18 -e 2021-1-4 -b custom-bundle --no-benchmark --capital-base 10000 > output.txt
+# scp -r -i algot.pem ~/Documents/Github/algot_test ubuntu@ec2-18-163-214-189.ap-east-1.compute.amazonaws.com:

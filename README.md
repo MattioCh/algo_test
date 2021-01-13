@@ -1,5 +1,19 @@
 # algo_test
 
+## Todo
+
+- Optimise copula with more stocks at the same time
+- **multithreading** for cross testing different sets of tickers and different set of parameter (for improving specific strategy)
+- make the program more like FSM
+- possibly use qt to wrap the program as a simulator
+- find more people?
+- find professor to help us?
+- Test report matplotlib function to instantly show the performance
+
+- Find more minute data
+- 
+
+
 ## Goal
 
 - On 31/Jan, Achieve 10% CAGR on any mean reversion or momentum strategy
@@ -97,3 +111,7 @@
     - Register different bundles, where some bundle indlucde stokcs that are longer than 10 years, but some don't.
 
     - This may effect the clustering process tho... due to difference in data dimension.
+
+## 13/Jan On the way to going crazy
+
+- AWS is better than Azure because Azure would start charging you money starting from the third month
