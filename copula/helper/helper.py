@@ -1,9 +1,14 @@
+
+import numpy as np
+import operator
+
 def find_Return(price):
     ret = (price - price.shift(1))/price
     ret = ret.drop(ret.index[0])
     # fill the nan values with 0
     ret = ret.fillna(value = 0)
     return ret
+
 
 def _lpdf_copula(family, u, v,tau):
 
@@ -19,13 +24,14 @@ def _lpdf_copula(family, u, v,tau):
         
     return np.log(pdf)
 
+
 def misprice_index(family, u, v, tau):
     # calculates the conditional probability of u given v
     if family == 'clayton':
         U = u[-2:]
         V = v[-2:]
         theta = 2 * tau / (1 - tau)
-        cuv = (V ** (-theta - 1)) * (U ** (-theta) + V ** (-theta) - 1) ** (-1 / theta - 1)
+        cuv = (V ** (-theta - 1)) * (U ** (-theta) + V ** (-theta) - 1) ** (-1 / theta - 1) 
 
         return cuv
     
@@ -40,6 +46,7 @@ def misprice_index(family, u, v, tau):
     # misprice index of y given x = cvu   
         return cuv
 
+
 def compare_array_with_float(arr, int_, relate):
     ops = {'>': operator.gt,
            '<': operator.lt}
@@ -48,3 +55,5 @@ def compare_array_with_float(arr, int_, relate):
         if not ops[relate](i,int_):
             foo = False
     return foo
+        
+

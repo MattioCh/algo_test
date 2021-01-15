@@ -1,4 +1,5 @@
 
+from zipline import run_algorithm
 from zipline.api import *
 from zipline.finance import commission, slippage
 from scipy.stats import kendalltau
@@ -12,68 +13,22 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-def find_Return(price):
-    ret = (price - price.shift(1))/price
-    ret = ret.drop(ret.index[0])
-    # fill the nan values with 0
-    ret = ret.fillna(value = 0)
-    return ret
-def _lpdf_copula(family, u, v,tau):
-
-    if  family == 'clayton':
-        theta = 2 * tau / (1 - tau)
-        pdf = (theta + 1) * ((u ** (-theta) + v ** (-theta) - 1) ** (-2 - 1 / theta)) * (u ** (-theta - 1) * v ** (-theta - 1))
-
-    elif family == 'gumbel':
-        theta = 1 / (1 - tau)
-        A = (-np.log(u)) ** theta + (-np.log(v)) ** theta
-        c = np.exp(-A ** (1 / theta))
-        pdf = c * (u * v) ** (-1) * (A ** (-2 + 2 / theta)) * ((np.log(u) * np.log(v)) ** (theta - 1)) * (1 + (theta - 1) * A ** (-1 / theta))
-        
-    return np.log(pdf)
-def misprice_index(family, u, v, tau):
-    # calculates the conditional probability of u given v
-    if family == 'clayton':
-        U = u[-2:]
-        V = v[-2:]
-        theta = 2 * tau / (1 - tau)
-        cuv = (V ** (-theta - 1)) * (U ** (-theta) + V ** (-theta) - 1) ** (-1 / theta - 1)
-
-        return cuv
-    
-    elif family == 'gumbel':
-        U = u[-2:]
-        V = v[-2:]
-        theta = 1 / (1 - tau)
-        A = (-np.log(U)) ** theta + (-np.log(V)) ** theta
-        C = np.exp(-A ** (1 / theta))
-        # pdf = c * (U * V) ** (-1) * (A ** (-2 + 2 / theta)) * ((np.log(U) * np.log(V)) ** (theta - 1)) * (1 + (theta - 1) * A ** (-1 / theta))
-        cuv = C * (((- np.log(U))**theta + (-np.log(V))**theta) ** ((1-theta)/theta)) * (-np.log(V))**(theta-1) / V
-    # misprice index of y given x = cvu   
-        return cuv
-
-def compare_array_with_float(arr, int_, relate):
-    ops = {'>': operator.gt,
-           '<': operator.lt}
-    foo = True
-    for i in arr:
-        if not ops[relate](i,int_):
-            foo = False
-    return foo
-        
-
+import sys
+sys.path.append('/Users/matthewchuang/Documents/GitHub/algo_test/copula/')
+from helper.helper import find_Return, _lpdf_copula,compare_array_with_float,misprice_index
 
 def initialize(context):
     # set_max_leverage(3.3)
-    context.capital_base =100000
+    set_benchmark(False)
+    context.capital_base = 100000
     context.sym = [symbol("NSC"),symbol("CSX")]
     context.day_count = 0
     context.model = ""
     context.floor_CL = 0.05
-    context.cap_CL = 1 - context.floor_CL
+    context.cap_CL = 0.85
     context.set_commission(commission.PerShare(cost=.0075, min_trade_cost=1.0))
     context.set_slippage(slippage.VolumeShareSlippage())
-    context.leverage_flag =0
+    context.leverage_flag = 0
     pass
 
 
@@ -103,6 +58,18 @@ def handle_data(context, data):
         # trading happens 
     elif context.day_count > 1000:
         df = data.history(context.sym , "close", bar_count = context.day_count, frequency = "1d")
+
+        #                     columns
+        # index   |---AAPL--- | --stock 2---
+        # time1           1               2
+        # time2           8               6
+        # time3           4               7
+        
+        # df.indexes ->> [time1, time2,time3]
+        # df.columns -->> [stock1,stock2]
+        # df.loc[:,["AAPL","MSFT"]]
+
+
         print("--------------------------------")
         print(df.index[-1])
         ret = find_Return(df)
@@ -191,16 +158,28 @@ def handle_data(context, data):
     
     pass
 
+start = pd.Timestamp('2000-11-18', tz='utc')
+end = pd.Timestamp('2021-1-4', tz='utc')
+
+
+# Fire off backtest
+result = run_algorithm(
+    start=start, # Set start
+    end=end,  # Set end
+    initialize=initialize,handle_data=handle_data, # Define startup function
+    capital_base=100000, # Set initial capital
+    data_frequency = 'daily',  # Set data frequency
+    bundle='daily-bundle' ) # Select bundle
+
+result.to_pickle("test.pkl")
+
+    #zipline run -f main.py -o test.csv -s 2000-11-18 -e 2021-1-4 -b custom-bundle --no-benchmark --capital-base 100
+    #zipline run -f main.py -o test.csv -s 2000-11-18 -e 2021-1-4 -b custom-bundle --no-benchmark 
+    #zipline run -f main.py --data-frequency minute -o test1.csv -s 2000-11-18 -e 2021-1-5 -b minute-bundle --no-benchmark 
 
 
 
+    #zipline run -f main.py -o test7.csv -s 2000-11-18 -e 2021-1-4 -b custom-bundle --no-benchmark --capital-base 10000 > output.txt
+    # scp -r -i algot.pem ~/Documents/Github/algot_test ubuntu@ec2-18-163-214-189.ap-east-1.compute.amazonaws.com:
 
 
-#zipline run -f main.py -o test.csv -s 2000-11-18 -e 2021-1-4 -b custom-bundle --no-benchmark --capital-base 100
-#zipline run -f main.py -o test.csv -s 2000-11-18 -e 2021-1-4 -b custom-bundle --no-benchmark 
-#zipline run -f main.py --data-frequency minute -o test1.csv -s 2000-11-18 -e 2021-1-5 -b minute-bundle --no-benchmark 
-
-
-
-#zipline run -f main.py -o test7.csv -s 2000-11-18 -e 2021-1-4 -b custom-bundle --no-benchmark --capital-base 10000 > output.txt
-# scp -r -i algot.pem ~/Documents/Github/algot_test ubuntu@ec2-18-163-214-189.ap-east-1.compute.amazonaws.com:

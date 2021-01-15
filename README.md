@@ -9,11 +9,12 @@
 - find more people?
 - find professor to help us?
 - Test report matplotlib function to instantly show the performance
-
 - Find more minute data
-- 
+- visualisation, output.txt ->> do in time visualisation 2000 ,2001  
 
+##momentum
 
+##mean reversion 
 ## Goal
 
 - On 31/Jan, Achieve 10% CAGR on any mean reversion or momentum strategy
@@ -21,7 +22,9 @@
     - Copula pair trading with cluster and more stats test
     - Reimplementation on the US Equity statistical arbitrage model with clustering
     - Price prediction with more classical pricing theories and macro data (possibly machine learning, need to learn more tensorflow)
-      - <https://github.com/tensorflow/probability/tree/master/tensorflow_probability/examples/jupyter_notebooks>  
+      - <https://github.com/tensorflow/probability/tree/master/tensorflow_probability/examples/jupyter_notebooks>
+
+
 
 ## 2/Jan
 
