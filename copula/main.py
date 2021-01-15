@@ -7,57 +7,52 @@ from scipy.stats import linregress
 from zipline.finance import (commission)
 from statsmodels.distributions.empirical_distribution import ECDF
 import operator
-from statsmodels.genmod.families import family
+from copulas.bivariate import Bivariate
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-import sys
-sys.path.append('/Users/matthewchuang/Documents/GitHub/algo_test/copula/')
-from helper.helper import find_Return, _lpdf_copula,compare_array_with_float,misprice_index
+from helper import find_Return,compare_array_with_float
 
-def initialize(context):
+def initialize(env):
     # set_max_leverage(3.3)
     set_benchmark(False)
-    context.capital_base = 100000
-    context.sym = [symbol("NSC"),symbol("CSX")]
-    context.day_count = 0
-    context.model = ""
-    context.floor_CL = 0.05
-    context.cap_CL = 0.85
-    context.set_commission(commission.PerShare(cost=.0075, min_trade_cost=1.0))
-    context.set_slippage(slippage.VolumeShareSlippage())
-    context.leverage_flag = 0
+    env.capital_base = 100000
+    env.sym = [symbol("NSC"),symbol("CSX")]
+    env.day_count = 0
+    env.floor_CL = 0.05
+    env.cap_CL = 0.85
+    env.set_commission(commission.PerShare(cost=.0075, min_trade_cost=1.0))
+    env.set_slippage(slippage.VolumeShareSlippage())
+    env.leverage_flag = 0
+    env.model = ""
+    env.long_short_percentage = 1
     pass
 
 
 
-def handle_data(context, data):
+def handle_data(env, data):
     # Skip first 1000 days to get full windows
-    if context.day_count < 1000:
-        context.day_count +=1
+    if env.day_count < 1000:
+        env.day_count +=1
         return
-    elif context.day_count > 1000 and context.day_count %500 == 1:
-        df = data.history(context.sym , "close", bar_count = context.day_count, frequency = "1d")
+    elif env.day_count > 1000 and env.day_count %500 == 1:
+        df = data.history(env.sym , "close", bar_count = env.day_count, frequency = "1d")
         ret = find_Return(df)
         ret_1 = ret.iloc[:,0]
         ret_2 = ret.iloc[:,1]
-        ecdf_1 = ECDF(ret_1)
-        ecdf_2 = ECDF(ret_2)
+        u = ECDF(ret_1)(ret_1)
+        v = ECDF(ret_2)(ret_2)
         tau_ = kendalltau(ret_1,ret_2)[0]
-
-        u = ecdf_1(ret_1)
-        v = ecdf_2(ret_2)
         
-        clayton = _lpdf_copula("clayton", u, v,tau_) 
-        gumbel = _lpdf_copula("gumbel",u,v,tau_)
-        
-        context.model = "clayton" if clayton.sum() > gumbel.sum() else "gumbel"
+        u_v_stack = np.vstack((u,v)).T
+        v_u_stack = np.vstack((v,u)).T
+        env.model = Bivariate().select_copula(u_v_stack)
 
         # trading happens 
-    elif context.day_count > 1000:
-        df = data.history(context.sym , "close", bar_count = context.day_count, frequency = "1d")
+    elif env.day_count > 1000:
+        df = data.history(env.sym , "close", bar_count = env.day_count, frequency = "1d")
 
         #                     columns
         # index   |---AAPL--- | --stock 2---
@@ -75,73 +70,67 @@ def handle_data(context, data):
         ret = find_Return(df)
         ret_1 = ret.iloc[:,0]
         ret_2 = ret.iloc[:,1]
-        ecdf_1 = ECDF(ret_1)
-        ecdf_2 = ECDF(ret_2)
+
         tau_ = kendalltau(ret_1,ret_2)[0]
 
-        u = ecdf_1(ret_1)
-        v = ecdf_2(ret_2)
-        # Run linear regression over history return series 
-        # return desired trading signal ratio (coefficient)
-        # for every sym1 that is bought/sold, coef units of sym2 is sold/bought
-        
-        # coef = linregress(df.iloc[-500:,:]).slope 
+        if env.day_count % 1000 == 1:
+            u = ECDF(ret_1)(ret_1) 
+            v = ECDF(ret_2)(ret_2)
+            u_v_stack = np.vstack((u,v)).T
+            env.model = Bivariate().select_copula(u_v_stack)
+            
+        u = ECDF(ret_1)(ret_1[-2:]) 
+        v = ECDF(ret_2)(ret_2[-2:])
+        u_v_stack = np.vstack((u,v)).T
+        v_u_stack = np.vstack((v,u)).T
+
+        # Misprice index 
+
+
+        MI_u_v = env.model.partial_derivative(u_v_stack)[-2:]
+        MI_v_u = env.model.partial_derivative(v_u_stack)[-2:]
 
         # Trading logic 
-        
-        # Misprice index 
-        MI_u_v = misprice_index(context.model, u, v, tau_)
-        MI_v_u = misprice_index(context.model, v, u, tau_)
-
-        compare_array_with_float
-        # Placing orders: if long is relatively underpriced, buy the pair
-        # print("P1: ",df[-1,0])
-        # print("P2: ",df[-1,1])
-        # print("PNL: ", context.account.pnl)
-        # print(u)
-        # print(v)
-        # print(MI_u_v)
-        # print(MI_v_u)
-        if context.leverage_flag == 0:
-            if compare_array_with_float(MI_u_v, context.floor_CL,"<") and compare_array_with_float(MI_v_u, context.cap_CL,">"):
+        if env.leverage_flag == 0:
+            if compare_array_with_float(MI_u_v, env.floor_CL,"<") and compare_array_with_float(MI_v_u, env.cap_CL,">"):
                 #long u short v
-                long_pos = order_target_percent(context.sym[0], 0.4)
-                short_pos = order_target_percent(context.sym[1], -0.4 )
+                long_pos = order_target_percent(env.sym[0], env.long_short_percentage)
+                short_pos = order_target_percent(env.sym[1], -env.long_short_percentage )
                 print(-116)
 
             # Placing orders: if short is relatively underpriced, sell the pair
-            elif compare_array_with_float(MI_u_v, context.cap_CL,">") and compare_array_with_float(MI_v_u, context.floor_CL,"<"):
+            elif compare_array_with_float(MI_u_v, env.cap_CL,">") and compare_array_with_float(MI_v_u, env.floor_CL,"<"):
                 #short u long v
-                long_pos = order_target_percent(context.sym[1], 0.4 )
-                short_pos = order_target_percent(context.sym[0], -0.4 )
+                long_pos = order_target_percent(env.sym[1], env.long_short_percentage )
+                short_pos = order_target_percent(env.sym[0], -env.long_short_percentage )
                 print(-123)
             else:
-                short_pos = order_target(context.sym[1], 0)
-                long_pos = order_target(context.sym[0], 0)
+                short_pos = order_target(env.sym[1], 0)
+                long_pos = order_target(env.sym[0], 0)
                 print(-127)
-            context.leverage_flag = 1 if context.account.net_leverage > 3  else 0
+            env.leverage_flag = 1 if env.account.net_leverage > 3  else 0
             pass
 
         else:
-            if (MI_u_v[-1] > context.floor_CL and MI_v_u[-1] < context.cap_CL) or (MI_u_v[-1] > context.floor_CL and MI_v_u[-1] < context.cap_CL):
-                short_pos = order_target(context.sym[1], 0)
-                long_pos = order_target(context.sym[0], 0)
-                context.leverage_flag = 0 if context.account.net_leverage < 3 else 1
+            if (MI_u_v[-1] > env.floor_CL and MI_v_u[-1] < env.cap_CL) or (MI_u_v[-1] > env.floor_CL and MI_v_u[-1] < env.cap_CL):
+                short_pos = order_target(env.sym[1], 0)
+                long_pos = order_target(env.sym[0], 0)
+                env.leverage_flag = 0 if env.account.net_leverage < 3 else 1
                 print(-137)
                 pass
             pass
         
         print("P1: ",df.iloc[-1,0])
         print("P2: ",df.iloc[-1,1])
-        print("PNL: ", context.portfolio.pnl)
+        print("PNL: ", env.portfolio.pnl)
         # print("coef:",coef)
         print(u)
         print(v)
         print(MI_u_v)
         print(MI_v_u)
 
-        order1 = get_open_orders(context.sym[0])
-        order2 = get_open_orders(context.sym[1])
+        order1 = get_open_orders(env.sym[0])
+        order2 = get_open_orders(env.sym[1])
         print(order1)
         print(order2)
         if order1 != [] and order2 != []:
@@ -149,20 +138,23 @@ def handle_data(context, data):
             print("Amount:", order2[0]["amount"])
                 
     
-    record(P1=data.current(context.sym[0], 'price'))
-    record(P2=data.current(context.sym[1], 'price'))
+    record(P1=data.current(env.sym[0], 'price'))
+    record(P2=data.current(env.sym[1], 'price'))
 
 
-    context.day_count+=1
+    env.day_count+=1
 
     
     pass
 
-start = pd.Timestamp('2000-11-18', tz='utc')
-end = pd.Timestamp('2021-1-4', tz='utc')
+
 
 
 # Fire off backtest
+
+start = pd.Timestamp('2000-11-18', tz='utc')
+end = pd.Timestamp('2021-1-4', tz='utc')
+
 result = run_algorithm(
     start=start, # Set start
     end=end,  # Set end
@@ -171,7 +163,7 @@ result = run_algorithm(
     data_frequency = 'daily',  # Set data frequency
     bundle='daily-bundle' ) # Select bundle
 
-result.to_pickle("test.pkl")
+# result.to_pickle("test.pkl")
 
     #zipline run -f main.py -o test.csv -s 2000-11-18 -e 2021-1-4 -b custom-bundle --no-benchmark --capital-base 100
     #zipline run -f main.py -o test.csv -s 2000-11-18 -e 2021-1-4 -b custom-bundle --no-benchmark 
@@ -183,3 +175,4 @@ result.to_pickle("test.pkl")
     # scp -r -i algot.pem ~/Documents/Github/algot_test ubuntu@ec2-18-163-214-189.ap-east-1.compute.amazonaws.com:
 
 
+# ssh -i ~/Downloads/algot.pem ubuntu@ec2-18-162-232-172.ap-east-1.compute.amazonaws.com
