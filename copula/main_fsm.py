@@ -15,30 +15,22 @@ from zipline.finance import commission, slippage
 
 from fsm_states import s
 from helper import compare_array_with_float, find_Return
+import math
 
 
 class s(enum.Enum): #States
-    Error           = 0
-    INITIATE        = 1
-    FIRST_1000_DAYS = 2
-    PROCESS_DATA    = 3
-    MAKE_ORDER      = 4
-    EXCEED_LEVERAGE = 5
-    PRINT_LOG       = 6
-    EXIT_FSM        = 7
-
+    DEFAULT         = 0
+    L0S1            = 1  #Long sym[0] short sym[1]
+    L1S0            = 2  #Long sym[1] short sym[0]   
     pass
 
 '''             Trigger             Prev State          Next State'''
 
-transitions_ = [["initiate",        s.INITIATE ,        s.FIRST_1000_DAYS],
-                ["proceed",         s.FIRST_1000_DAYS,  s.PROCESS_DATA],
-                ["proceed",         s.PROCESS_DATA,     s.MAKE_ORDER],
-                ["proceed",         s.MAKE_ORDER,       s.PRINT_LOG],
-                ["exceed_leverage", s.MAKE_ORDER,       s.EXCEED_LEVERAGE],
-                ["proceed",         s.EXCEED_LEVERAGE,  s.PRINT_LOG],
-                ["print_log",       s.PRINT_LOG,        s.EXIT_FSM],
-                ["exit",            s.EXIT_FSM,         s.EXIT_FSM]
+transitions_ = [["initiate",        s.DEFAULT ,         s.DEFAULT],
+                ["order_0",         "*",                  s.L0S1],
+                ["release",         s.L0S1,             s.DEFAULT],
+                ["order_1",         "*",                  s.L1S0],
+                ["release",         s.L1S0,             s.DEFAULT]
                                                                             ]
 
 def initialize(env):
@@ -47,34 +39,168 @@ def initialize(env):
     env.capital_base = 100000
     env.sym = [symbol("NSC"),symbol("CSX")]
     env.day_count = 0
-    env.floor_CL = 0.05
+    env.floor_CL = 0.15
     env.cap_CL = 0.85
     env.set_commission(commission.PerShare(cost=.0075, min_trade_cost=1.0))
     env.set_slippage(slippage.VolumeShareSlippage())
     env.leverage_flag = 0
     env.model = ""
     env.long_short_percentage = 1
-    env.m = Machine(states=s, transitions=transitions_,initial=s.INITIATE)
+    env.m = Machine(states=s, transitions=transitions_,initial=s.DEFAULT)
+    env.lookback =20 
     pass
 
 
-def trade_fsm(env, data , state , m ):
-    
-    if state == s.INITIATE:
-        m.proceed()
-        return
+# def trade_fsm(env, data , m):
+#     state = m.state
+#     if state == s.INITIATE:
+#         m.proceed()
+#         return
 
-    if state == s.FIRST_1000_DAYS:
+#     if state == s.FIRST_1000_DAYS:
+#         env.day_count += 1
+#         m.exit()
+#         return
+
+#     if state == s.PROCESS_DATA:
 
 
-    return
+#     return 0
 
 
 def handle_data(env, data):
 
-    while env.m.state != s.EXIT_FSM:
-        trade_fsm(env , data, env.m.state , env.m)
+    if env.day_count < 1001:
+        env.day_count +=1
+        return
+
+    #process data
+    df = data.history(env.sym , "close", bar_count = env.day_count, frequency = "1d")
+
+        #                     columns
+        # index   |---AAPL--- | --stock 2---
+        # time1           1               2
+        # time2           8               6
+        # time3           4               7
+        
+        # df.indexes ->> [time1, time2,time3]
+        # df.columns -->> [stock1,stock2]
+        # df.loc[:,["AAPL","MSFT"]]
+
+    print("--------------------------------")
+    print(df.index[-1])
+    ret = find_Return(df)
+    ret_1 = ret.iloc[:,0]
+    ret_2 = ret.iloc[:,1]
+
+    #DM
+    df1 = df.iloc[-env.lookback:,:]
+    spread_mean = (df1.iloc[:,1]-df1.iloc[:,0]).mean()
+    spread_std = (df1.iloc[:,1]-df1.iloc[:,0]).std()
+
+    upper_lim = spread_mean + 1.5 * spread_std
+    lower_lim = spread_mean - 1.5 * spread_std
+    up_exit =   spread_mean - 0.5 * spread_std
+    low_exit =  spread_mean - 0.5*  spread_std 
+
+    spread = df.iloc[-1,1] - df.iloc[-1,0]
+    # copula
+    tau_ = kendalltau(ret_1,ret_2)[0]
+    if env.day_count % 1000 == 1:
+        u = ECDF(ret_1)(ret_1) 
+        v = ECDF(ret_2)(ret_2)
+        u_v_stack = np.vstack((u,v)).T
+        env.model = Bivariate().select_copula(u_v_stack)
+        
+    u = ECDF(ret_1)(ret_1[-2:]) 
+    v = ECDF(ret_2)(ret_2[-2:])
+    u_v_stack = np.vstack((u,v)).T
+    v_u_stack = np.vstack((v,u)).T
+
+    # Misprice index 
+
+    MI_u_v = env.model.partial_derivative(u_v_stack)[-1:]
+    MI_v_u = env.model.partial_derivative(v_u_stack)[-1:]
+
+
+    #fsm to check order state 
+
+    if env.m.state == s.DEFAULT:
+        print("DEFAULT")
+        if compare_array_with_float(MI_u_v, env.floor_CL,"<") and compare_array_with_float(MI_v_u, env.cap_CL,">") and spread > upper_lim:
+            #long u short v
+            long_pos = order_target_percent(env.sym[0], env.long_short_percentage)
+            short_pos = order_target_percent(env.sym[1], -env.long_short_percentage )
+            env.m.order_0()
+            env.lookback +=1
+            print(-116)
+
+            # Placing orders: if short is relatively underpriced, sell the pair
+        elif compare_array_with_float(MI_u_v, env.cap_CL,">") and compare_array_with_float(MI_v_u, env.floor_CL,"<") and spread < lower_lim:
+            #short u long v
+            long_pos = order_target_percent(env.sym[1], env.long_short_percentage )
+            short_pos = order_target_percent(env.sym[0], -env.long_short_percentage )
+            env.m.order_1()
+            env.lookback +=1
+            print(-123)
+        
         pass
+
+    elif env.m.state == s.L0S1:
+        print("LOS1")
+        if compare_array_with_float(MI_u_v, env.cap_CL,">") and compare_array_with_float(MI_v_u, env.floor_CL,"<") and spread < lower_lim:
+            long_pos = order_target_percent(env.sym[0], env.long_short_percentage)
+            short_pos = order_target_percent(env.sym[1], -env.long_short_percentage )
+            env.m.order_1()
+            env.lookback = 21
+            print(-116)
+        elif spread  < up_exit:
+            short_pos = order_target(env.sym[1], 0)
+            long_pos = order_target(env.sym[0], 0)
+            env.m.release()
+            env.lookback = 20
+        else:
+            env.lookback +=1
+    elif env.m.state == s.L1S0:
+        print("L1S0")
+        if compare_array_with_float(MI_u_v, env.cap_CL,">") and compare_array_with_float(MI_v_u, env.floor_CL,"<") and spread < lower_lim:
+            #short u long v
+            long_pos = order_target_percent(env.sym[1], env.long_short_percentage )
+            short_pos = order_target_percent(env.sym[0], -env.long_short_percentage )
+            env.m.order_0()
+            env.lookback = 21
+            print(-123)
+        elif spread > low_exit:
+            short_pos = order_target(env.sym[1], 0)
+            long_pos = order_target(env.sym[0], 0)
+            env.m.release()
+            env.lookback = 20
+        else:
+            env.lookback +=1
+
+
+    #loggeresss
+
+    print("P1: ",df.iloc[-1,0])
+    print("P2: ",df.iloc[-1,1])
+    print("PNL: ", env.portfolio.pnl)
+
+    print("MI_u_v:",MI_u_v)
+    print("MI_v_u:",MI_v_u)
+
+    print("spread:",spread)
+    print("mean_spread",spread_mean)
+    print("up_lim", upper_lim)
+    print("lower_lim", lower_lim)
+
+
+    order1 = get_open_orders(env.sym[0])
+    order2 = get_open_orders(env.sym[1])
+    print(order1)
+    print(order2)
+    if order1 != [] and order2 != []:
+        print("Amount:", order1[0]["amount"])
+        print("Amount:", order2[0]["amount"])
 
     pass
 

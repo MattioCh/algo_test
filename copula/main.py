@@ -22,12 +22,13 @@ def initialize(env):
     env.sym = [symbol("NSC"),symbol("CSX")]
     env.day_count = 0
     env.floor_CL = 0.05
-    env.cap_CL = 0.85
+    env.cap_CL = 0.95
     env.set_commission(commission.PerShare(cost=.0075, min_trade_cost=1.0))
     env.set_slippage(slippage.VolumeShareSlippage())
     env.leverage_flag = 0
     env.model = ""
     env.long_short_percentage = 1
+    env.hold_flag = 0
     pass
 
 
@@ -37,21 +38,9 @@ def handle_data(env, data):
     if env.day_count < 1000:
         env.day_count +=1
         return
-    elif env.day_count > 1000 and env.day_count %500 == 1:
-        df = data.history(env.sym , "close", bar_count = env.day_count, frequency = "1d")
-        ret = find_Return(df)
-        ret_1 = ret.iloc[:,0]
-        ret_2 = ret.iloc[:,1]
-        u = ECDF(ret_1)(ret_1)
-        v = ECDF(ret_2)(ret_2)
-        tau_ = kendalltau(ret_1,ret_2)[0]
-        
-        u_v_stack = np.vstack((u,v)).T
-        v_u_stack = np.vstack((v,u)).T
-        env.model = Bivariate().select_copula(u_v_stack)
 
         # trading happens 
-    elif env.day_count > 1000:
+    else:
         df = data.history(env.sym , "close", bar_count = env.day_count, frequency = "1d")
 
         #                     columns
@@ -70,6 +59,8 @@ def handle_data(env, data):
         ret = find_Return(df)
         ret_1 = ret.iloc[:,0]
         ret_2 = ret.iloc[:,1]
+        # ret_1 = ret_1/ret_1.std()
+        # ret_2 = ret_1/ret_2.std()
 
         tau_ = kendalltau(ret_1,ret_2)[0]
 
@@ -112,7 +103,7 @@ def handle_data(env, data):
             pass
 
         else:
-            if (MI_u_v[-1] > env.floor_CL and MI_v_u[-1] < env.cap_CL) or (MI_u_v[-1] > env.floor_CL and MI_v_u[-1] < env.cap_CL):
+            if (compare_array_with_float(MI_u_v, env.floor_CL,">") and compare_array_with_float(MI_v_u, env.cap_CL,"<")) or (compare_array_with_float(MI_u_v, env.cap_CL,"<") and compare_array_with_float(MI_v_u, env.floor_CL,">")):
                 short_pos = order_target(env.sym[1], 0)
                 long_pos = order_target(env.sym[0], 0)
                 env.leverage_flag = 0 if env.account.net_leverage < 3 else 1
@@ -128,6 +119,8 @@ def handle_data(env, data):
         print(v)
         print(MI_u_v)
         print(MI_v_u)
+        print(env.sym[0].price_multiplier)
+        print(env.sym[1].price_multiplier)
 
         order1 = get_open_orders(env.sym[0])
         order2 = get_open_orders(env.sym[1])
