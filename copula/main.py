@@ -1,5 +1,5 @@
 
-from zipline.api import *
+from zipline.api import * 
 from scipy.stats import kendalltau
 from scipy.stats import linregress
 from zipline.finance import (commission)
