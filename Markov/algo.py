@@ -2,24 +2,24 @@
 from zipline import run_algorithm
 from zipline.api import *
 from zipline.finance import commission, slippage
-from scipy.stats import kendalltau
-from scipy.stats import linregress
+
 from zipline.finance import (commission)
-from statsmodels.distributions.empirical_distribution import ECDF
+
 import operator
-from copulas.bivariate import Bivariate
+
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from markovfsm import Chain
 
-from helper import find_Return,compare_array_with_float
+from helper import find_Return, compare_array_with_float , put_into_bin
 
 def initialize(env):
     # set_max_leverage(3.3)
     set_benchmark(False)
     env.capital_base = 100000
-    env.sym = [symbol("NSC"),symbol("CSX")]
+    env.sym = symbol("AAPL")
     env.day_count = 0
     env.floor_CL = 0.05
     env.cap_CL = 0.95
@@ -38,11 +38,33 @@ def handle_data(env, data):
     if env.day_count < 1000:
         env.day_count +=1
         return
-
         # trading happens 
     else:
+        df = data.history(env.sym , "close", bar_count = env.day_count, frequency = "1d")
+        ret = find_Return(df)
+        h = ret.std() *3.49 / len(ret)**(1/3)
+        ret_list = ret.tolist()
+        bins , slices = put_into_bin(ret_list, h)
+
+        chain = Chain(len(bins), bins[0])
+        for i in range(1,len(bins)):
+            chain.learn(bins[i])
+        prob = chain.get_transitions_probs(bins[-1])
         
-        pass
+        print(bins)
+        pos = 0
+        for i in range(len(slices)):
+            if slices[i] > 0:
+                print(slices[i-1])
+                print(slices[i])
+                print(slices[i+1])
+                pos = i 
+                break
+        print(pos)
+        print(bins[pos])
+        print(set(bins))
+
+
 
     env.day_count+=1
 

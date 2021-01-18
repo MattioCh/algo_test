@@ -58,7 +58,7 @@ def initialize(env):
     env.model = ""
     env.long_short_percentage = 1
     env.control =0
-    # env.m = Machine(states=s, transitions=transitions_,initial=s.DEFAULT)
+    env.m = Machine(states=s, transitions=transitions_,initial=s.DEFAULT)
 
     
     env.tensorboard = TensorBoard(log_dir= "/Users/matthewchuang/Documents/GitHub/algo_test/copula/test")
