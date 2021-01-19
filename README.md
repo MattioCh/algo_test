@@ -115,6 +115,74 @@
 
     - This may effect the clustering process tho... due to difference in data dimension.
 
+##6/Jan
+
+- improve the clustering process with 1500 stocks data spanning twenty years
+  - compile a merge.pkl file that contains all the stock that have full history, however some stocks are excluded because it might starts having value in later time (ex. TSLA)
+  - Might need to set 0 for previous value since 0 value means they don't exist yet and this can give a better overall dataset.
+- minutes data work
+  - however only 30 days with 2minutes data is provided by finance
+  - even though yfinance let you set parameter for 60 days, the data actually only starts at 30 days.
+
+##8/Jan
+- add data_clean.py to clean up tickers that have the wrong shape
+  - have a stable version for the datas folder and it can be used most of the time.
+- Added the Misprice index for different copulas and added the trading logic
+  
+##11/Jan
+- fixed the copula trading logic, the output is not between [0,1] and it needs to apply an inverse function
+- added the leverage logic so that the leverage goes into infinity and keep buying
+
+##12/Jan
+- increase the window to check Misprice index
+  - This makes the trading algorithm more conserve and it will only perform long short and the misprice signel is generated for 2 consecutive days.
 ## 13/Jan On the way to going crazy
 
 - AWS is better than Azure because Azure would start charging you money starting from the third month
+- future plan on cloud computing:
+  - need to research more about how much faster it is to use a more expensive cpu
+  - possibly try the cpu with Steven because he recently got a better desktop
+
+## 14/Jan python imports....
+- took too much time on figuring how to imports, here are some rules:
+  - if you have a helper.py in the same directory as your main.py, you will import the function **ONE BY ONE** as follows:
+  - ```python
+    from helper import func1, func2, func3
+    ```
+  - if you have a folder call foo and there is a file called helper.py that you want to use, then you have to make sure you have another file that is called __init__.py to make sure python knows the **foo** is a directory. You can import with the following code
+  - ```python
+    from foo.helper import func1, func2, func3
+    ```
+  - so let's stop using our time solving imports
+
+
+##16/Jan 
+- implemented the trading logic with a few modules:
+  - transitions: basically a python module that has a very good FSM structure that and you can also use Enums. The speed doesn't slow down by too much
+- Distance method is trash. The problem is the distance between stocks changes drastically over the time. Therefore, the exit threshold changes to a margin where the initial trading positiion is no longer favourable. Even if you fixed the initial trading signal, this is actually worse because if the initial mean spread is too high, then you trade can never exit. 
+- find some seniors amazing work https://github.com/wywongbd/pairstrade-fyp-2019 
+  - should ask and cold email about the project
+
+##17/Jan
+-(Magd you should write this)
+-simple Ml with logictic regression. Exceptional result with a good stock, however, the results is very stock dependent, can't really say how it's going to predict if the price might go down.
+
+##18/Jan
+- Added the Tensorboard thing
+  - very useful for tracking the progress **in real time**
+  - can add more graph to monitor but Xian can use streamlit in the futrue so why bother tnesorboard anymore?
+- tried a new method --> probabilitic markov chain model
+  - I guess it's a very very simple version of RL because it doesn't look at the action space, and only look at the current state and calculates the probability of the expected value of next day's price. I used the Scott's rule to seperate the bin number but then maybe I can do it dynamically??
+  - The result is good:
+    - shapre: 0.8 (lowest at 0.4), return 35 for in 14 years, 28& per year. However, the max drawdown is 50% in 2019, but return is 200% in 2020. So, who knows? (haven't batch tested on more stocks, only on AAPL for now, though it out performs it so maybe it's good?)
+  - Urgently need Batch testing method
+
+##19/Jan
+- Help Xian to setup for zipline..
+  - The process is still way to long... maybe need to write a bash script to streamline the process?
+- Xian made the streamlit real-time work!!!
+  - let's call it stream-realtime, happy:)
+  - However, he haven't pushed yet, so don't know how to output yet.
+  - Tbh, it's possible to use jupyter notebook I just realised, but jupyter notebook might be bad for streaming in real-time and there is less flexibility... tbh... this is my bad decision
+- Need to find more software work. Again tbh, I think it's better to let Xian learn the trading logic? But, I feel like if not in person, it feels harder to explain the trading logic and some simple ideas..
+- Training frequency needs to increase for ML, sharpe is significanlty higher and I guess it just make the decision more "informed" and conservative. might to use validation to see whether there is overfitting.
