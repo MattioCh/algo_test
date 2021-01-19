@@ -1,3 +1,6 @@
+# difference with logreg 
+# 1. training every 30 days instead of only once 
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -23,7 +26,7 @@ def handle_data(context, data):
     if context.time < training_period:
         return
     
-    if context.time == training_period: # train the model with historical data
+    if ((context.time - training_period) % 30 == 0): # retrain every 30 days
         price_history = np.array(data.history(context.asset, fields="price", bar_count=training_period, frequency="1d"))
         cols = []
         df = pd.DataFrame(data=price_history, columns=['price'])
@@ -36,33 +39,28 @@ def handle_data(context, data):
         lm = linear_model.LogisticRegression(C=1e7, solver='lbfgs', multi_class='auto', max_iter=1000)
         lm.fit(df[cols], np.sign(df['return']))
         context.model = lm
-        #context.reg = np.linalg.lstsq(df[cols], df['return'], rcond=None)[0]
-        #print(context.reg)
 
     # trading happens
-    if context.time > training_period:
+    if context.time > training_period: # also when the retraining happens 
         lag_history = data.history(context.asset, fields='price', bar_count = lags+1, frequency="1d")
-        ret = np.log(lag_history / lag_history.shift(1))        
-        #trend = np.sign(np.dot(ret[1:], context.reg))
+        ret = np.log(lag_history / lag_history.shift(1))  
         trend = context.model.predict(ret[1:].values.reshape(1,-1))
         if trend > 0:
             order_target_percent(context.asset, n_stocks_to_buy)
-            #print('buy')
         elif trend < 0:
             order_target_percent(context.asset, -n_stocks_to_buy)
-            #print('sell')
         
         record(price=data.current(context.asset, 'price'))
         record(trend=trend)
         record(pnl=context.portfolio.pnl)
 
 def analyze(context, perf):
-    fig, ax = plt.subplots(3, 1, sharex=True, figsize=[16,9])
+    fig, ax = plt.subplots(4, 1, sharex=True, figsize=[16,9])
 
     perf.portfolio_value.plot(ax=ax[0])
     ax[0].set_ylabel('portfolio value in $')
 
-    perf['price'].plot(ax=ax[1])
+    perf['pnl'].plot(ax=ax[1])
     ax[1].set_ylabel('price in $')
 
     perf.returns.plot(ax=ax[2])
@@ -84,13 +82,11 @@ result = run_algorithm(
     bundle='custom-bundle2' # Select bundle
 ) 
 
-result.to_pickle("test1.pkl")
+result.to_pickle("test2.pkl")
 
 '''
 - closing positions
 - more logic for combinations of long, short etc
-- train everyday?
-- train every 30 days?
 - different lag
 - different models in Logistic Regression
 '''
