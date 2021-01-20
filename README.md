@@ -115,7 +115,7 @@
 
     - This may effect the clustering process tho... due to difference in data dimension.
 
-##6/Jan
+## 6/Jan
 
 - improve the clustering process with 1500 stocks data spanning twenty years
   - compile a merge.pkl file that contains all the stock that have full history, however some stocks are excluded because it might starts having value in later time (ex. TSLA)
@@ -129,7 +129,7 @@
   - have a stable version for the datas folder and it can be used most of the time.
 - Added the Misprice index for different copulas and added the trading logic
   
-##11/Jan
+## 11/Jan
 - fixed the copula trading logic, the output is not between [0,1] and it needs to apply an inverse function
 - added the leverage logic so that the leverage goes into infinity and keep buying
 
@@ -156,14 +156,14 @@
   - so let's stop using our time solving imports
 
 
-##16/Jan 
+## 16/Jan 
 - implemented the trading logic with a few modules:
   - transitions: basically a python module that has a very good FSM structure that and you can also use Enums. The speed doesn't slow down by too much
 - Distance method is trash. The problem is the distance between stocks changes drastically over the time. Therefore, the exit threshold changes to a margin where the initial trading positiion is no longer favourable. Even if you fixed the initial trading signal, this is actually worse because if the initial mean spread is too high, then you trade can never exit. 
 - find some seniors amazing work https://github.com/wywongbd/pairstrade-fyp-2019 
   - should ask and cold email about the project
 
-##17/Jan
+## 17/Jan
 -(Magd you should write this)
 -simple Ml with logictic regression. Exceptional result with a good stock, however, the results is very stock dependent, can't really say how it's going to predict if the price might go down.
 
@@ -177,7 +177,7 @@
     - shapre: 0.8 (lowest at 0.4), return 35 for in 14 years, 28& per year. However, the max drawdown is 50% in 2019, but return is 200% in 2020. So, who knows? (haven't batch tested on more stocks, only on AAPL for now, though it out performs it so maybe it's good?)
   - Urgently need Batch testing method
 
-##19/Jan
+## 19/Jan
 - Help Xian to setup for zipline..
   - The process is still way to long... maybe need to write a bash script to streamline the process?
 - Xian made the streamlit real-time work!!!
