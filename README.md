@@ -186,3 +186,11 @@
   - Tbh, it's possible to use jupyter notebook I just realised, but jupyter notebook might be bad for streaming in real-time and there is less flexibility... tbh... this is my bad decision
 - Need to find more software work. Again tbh, I think it's better to let Xian learn the trading logic? But, I feel like if not in person, it feels harder to explain the trading logic and some simple ideas..
 - Training frequency needs to increase for ML, sharpe is significanlty higher and I guess it just make the decision more "informed" and conservative. might to use validation to see whether there is overfitting.
+
+##20/Jan
+- Setup some basic stuff for pyqt
+  - I (matthew) can't download the Qt designer, whyyyyy????? Some people in the forum also said they couldn't download because the server is down. But... how does Xian downloaded it...
+  - Need a better design and more detail object name in the design to make future work process easier
+  - For one point, I thought we need to use a webhost to verify new accounts. Now I realised, it's possible to encrypt the time that they can use,also the date they start as the key, and anytime after this, then they cannot use the software anymore, I mean I don't really know why I am so protective about this thing... maybe I should really change my perspective about protecting IP and releasing it to more people. I truly want more people to use it, but I am just scared that people would just join us(if they will ofc...), and just leave with the software... sad... Maybe I am thinking about this wrongly...
+- magd is downloadiing the keras, maybe she needs to log the problem of how to successfully download keras with the zipline env.
+- I think the next few things we need urgently is the minute data and a more professional guidance.
