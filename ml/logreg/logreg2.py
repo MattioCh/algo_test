@@ -13,7 +13,7 @@ from zipline.finance import commission
 # parameters 
 lags = 3
 training_period = 3500 # around 6-7 years
-selected_stock = 'AAPL'
+selected_stock = 'AAON'
 n_stocks_to_buy = 1
 
 def initialize(context):
