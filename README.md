@@ -187,7 +187,7 @@
 - Need to find more software work. Again tbh, I think it's better to let Xian learn the trading logic? But, I feel like if not in person, it feels harder to explain the trading logic and some simple ideas..
 - Training frequency needs to increase for ML, sharpe is significanlty higher and I guess it just make the decision more "informed" and conservative. might to use validation to see whether there is overfitting.
 
-##20/Jan
+## 20/Jan
 - Setup some basic stuff for pyqt
   - I (matthew) can't download the Qt designer, whyyyyy????? Some people in the forum also said they couldn't download because the server is down. But... how does Xian downloaded it...
   - Need a better design and more detail object name in the design to make future work process easier
