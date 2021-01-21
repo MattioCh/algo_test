@@ -14,6 +14,8 @@
 ### Todo:
 - use volume data to identify high volume days for exit signals 
 - fine tune parameters, e.g. number of lags, SMA to EMA, ...
+- predict further ahead, e.g. market movement in the next 30 days instead of just one step ahead
+- scale data for optimal performance?
 
 ### Observations (with sample size of 3 tickers):
 1. More conservative:
