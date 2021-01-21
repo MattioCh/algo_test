@@ -1,9 +1,10 @@
 import sys
 from PyQt5 import QtWidgets, uic , QtGui
 
-from v3 import Ui_MainWindow
+from v4 import Ui_MainWindow
 import sys 
 import os 
+import re
 from PyQt5.QtCore import QProcess
 
 
@@ -22,16 +23,24 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         ## Click functionssssss
         self.find_dir_button.clicked.connect(self.select_file)
         self.start_button.clicked.connect(self.start_backtest)
+        self.stop_button.clicked.connect(self.kill_process)
+        self.clear_button.clicked.connect(self.clear_log)
         
     
     ##def functionsssss
     def select_file (self):
         dialog = QtWidgets.QFileDialog()
         self.file_path , file_type= dialog.getOpenFileName(None, "Select file",self.cwd,"(*.py)")
-        print(self.file_path)
+        self.file_path = self.file_path.split("/")
+        if self.file_path != "":
+            self.directory.setText("...  / "+ self.file_path[-1])
 
     def message(self, s):
         self.logger.appendPlainText(s)
+        pass
+
+    def clear_log(self):
+        self.logger.clear()
         pass
 
 
@@ -43,7 +52,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.p.readyReadStandardError.connect(self.handle_stderr)
             self.p.stateChanged.connect(self.handle_state)
             self.p.finished.connect(self.process_finished)
-            self.p.start("python3", [self.file_path])
+            # self.p.start("python3", [self.file_path])
+            self.p.start("python3", ["/Users/matthewchuang/Documents/GitHub/algo_test/Markov/algo.py"])
         pass
 
     def handle_stderr(self):
@@ -64,6 +74,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         }
         state_name = states[state]
         self.message(f"State changed: {state_name}")
+
+    def kill_process(self):
+        if self.p is not None:
+            self.p.kill()
+        pass
     
     def process_finished(self):
         self.message("Process finished.")

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>821</width>
-    <height>611</height>
+    <width>827</width>
+    <height>621</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,8 +17,8 @@
    <widget class="QToolButton" name="find_dir_button">
     <property name="geometry">
      <rect>
-      <x>710</x>
-      <y>383</y>
+      <x>720</x>
+      <y>434</y>
       <width>31</width>
       <height>31</height>
      </rect>
@@ -31,7 +31,7 @@
     <property name="geometry">
      <rect>
       <x>690</x>
-      <y>500</y>
+      <y>510</y>
       <width>93</width>
       <height>28</height>
      </rect>
@@ -40,17 +40,17 @@
      <string>stop</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="restart_button">
+   <widget class="QPushButton" name="clear_button">
     <property name="geometry">
      <rect>
       <x>490</x>
-      <y>500</y>
+      <y>510</y>
       <width>93</width>
       <height>28</height>
      </rect>
     </property>
     <property name="text">
-     <string>restart</string>
+     <string>clear</string>
     </property>
    </widget>
    <widget class="QWidget" name="gridLayoutWidget">
@@ -81,7 +81,7 @@
     <property name="geometry">
      <rect>
       <x>590</x>
-      <y>500</y>
+      <y>510</y>
       <width>93</width>
       <height>28</height>
      </rect>
@@ -90,20 +90,7 @@
      <string>start</string>
     </property>
    </widget>
-   <widget class="QRadioButton" name="run_option">
-    <property name="geometry">
-     <rect>
-      <x>489</x>
-      <y>420</y>
-      <width>100</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>run</string>
-    </property>
-   </widget>
-   <widget class="QPlainTextEdit" name="plainTextEdit">
+   <widget class="QPlainTextEdit" name="logger">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -116,14 +103,99 @@
    <widget class="QLabel" name="directory">
     <property name="geometry">
      <rect>
-      <x>510</x>
-      <y>390</y>
+      <x>500</x>
+      <y>444</y>
       <width>181</width>
-      <height>16</height>
+      <height>21</height>
      </rect>
     </property>
     <property name="text">
-     <string>Directory</string>
+     <string>Compile File :</string>
+    </property>
+   </widget>
+   <widget class="QWidget" name="gridLayoutWidget_2">
+    <property name="geometry">
+     <rect>
+      <x>500</x>
+      <y>383</y>
+      <width>191</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <widget class="QRadioButton" name="run_option">
+       <property name="text">
+        <string>run</string>
+       </property>
+       <attribute name="buttonGroup">
+        <string notr="true">buttonGroup</string>
+       </attribute>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QRadioButton" name="ingest_option">
+       <property name="text">
+        <string>ingest</string>
+       </property>
+       <attribute name="buttonGroup">
+        <string notr="true">buttonGroup</string>
+       </attribute>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QRadioButton" name="clean_option">
+       <property name="text">
+        <string>clean</string>
+       </property>
+       <attribute name="buttonGroup">
+        <string notr="true">buttonGroup</string>
+       </attribute>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QRadioButton" name="bundles_option">
+       <property name="text">
+        <string>bundles</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QLabel" name="output_dir">
+    <property name="geometry">
+     <rect>
+      <x>500</x>
+      <y>476</y>
+      <width>181</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Output_dir: </string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="find_dir_button_2">
+    <property name="geometry">
+     <rect>
+      <x>720</x>
+      <y>473</y>
+      <width>31</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>...</string>
+    </property>
+   </widget>
+   <widget class="QPlainTextEdit" name="plainTextEdit">
+    <property name="geometry">
+     <rect>
+      <x>500</x>
+      <y>470</y>
+      <width>181</width>
+      <height>31</height>
+     </rect>
     </property>
    </widget>
   </widget>
@@ -132,7 +204,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>821</width>
+     <width>827</width>
      <height>24</height>
     </rect>
    </property>
@@ -141,4 +213,7 @@
  </widget>
  <resources/>
  <connections/>
+ <buttongroups>
+  <buttongroup name="buttonGroup"/>
+ </buttongroups>
 </ui>
