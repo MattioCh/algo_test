@@ -194,3 +194,12 @@
   - For one point, I thought we need to use a webhost to verify new accounts. Now I realised, it's possible to encrypt the time that they can use,also the date they start as the key, and anytime after this, then they cannot use the software anymore, I mean I don't really know why I am so protective about this thing... maybe I should really change my perspective about protecting IP and releasing it to more people. I truly want more people to use it, but I am just scared that people would just join us(if they will ofc...), and just leave with the software... sad... Maybe I am thinking about this wrongly...
 - magd is downloadiing the keras, maybe she needs to log the problem of how to successfully download keras with the zipline env.
 - I think the next few things we need urgently is the minute data and a more professional guidance.
+
+## 21/Jan
+
+- Xian finished the part to data visualise
+  - the only way I think of to connect the output data with the backtest is by specifying the directory that gives the output file
+  - I really don't know how to connect for now. It really is a problem but I hope it can be done on friday, at least for the basic one....
+- The keras model works now, and probably needs better trading logic. 
+  - Need to investigate more on volume trading, can be helpful.
+- Also the backtesting emulator works now, it can compile perfectly well with the output log. Yet, the main problem is still how to input the data source into the program....sigh...
