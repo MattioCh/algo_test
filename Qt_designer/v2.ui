@@ -92,7 +92,7 @@
      <string>run</string>
     </property>
    </widget>
-   <widget class="QPlainTextEdit" name="plainTextEdit">
+   <widget class="Logger" name="plainTextEdit">
     <property name="geometry">
      <rect>
       <x>40</x>
@@ -122,7 +122,7 @@
       <widget class="plotters" name="View2"/>
      </item>
      <item row="1" column="1">
-      <widget class="QGraphicsView" name="View4"/>
+      <widget class="plotters" name="View4"/>
      </item>
     </layout>
    </widget>
@@ -140,6 +140,11 @@
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>Logger</class>
+   <extends>QPlainTextEdit</extends>
+   <header>Logger.h</header>
+  </customwidget>
   <customwidget>
    <class>plotters</class>
    <extends>QGraphicsView</extends>

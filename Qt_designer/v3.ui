@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>820</width>
+    <width>821</width>
     <height>611</height>
    </rect>
   </property>
@@ -14,62 +14,10 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QPushButton" name="restart_button">
-    <property name="geometry">
-     <rect>
-      <x>510</x>
-      <y>500</y>
-      <width>93</width>
-      <height>28</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>restart</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="start_button">
-    <property name="geometry">
-     <rect>
-      <x>610</x>
-      <y>500</y>
-      <width>93</width>
-      <height>28</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>start</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="stop_button">
-    <property name="geometry">
-     <rect>
-      <x>710</x>
-      <y>500</y>
-      <width>93</width>
-      <height>28</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>stop</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="directory">
-    <property name="geometry">
-     <rect>
-      <x>530</x>
-      <y>390</y>
-      <width>181</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Directory</string>
-    </property>
-   </widget>
    <widget class="QToolButton" name="find_dir_button">
     <property name="geometry">
      <rect>
-      <x>730</x>
+      <x>710</x>
       <y>383</y>
       <width>31</width>
       <height>31</height>
@@ -79,10 +27,73 @@
      <string>...</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="stop_button">
+    <property name="geometry">
+     <rect>
+      <x>690</x>
+      <y>500</y>
+      <width>93</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>stop</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="restart_button">
+    <property name="geometry">
+     <rect>
+      <x>490</x>
+      <y>500</y>
+      <width>93</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>restart</string>
+    </property>
+   </widget>
+   <widget class="QWidget" name="gridLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>30</y>
+      <width>721</width>
+      <height>331</height>
+     </rect>
+    </property>
+    <layout class="QGridLayout" name="gridLayout_3">
+     <item row="1" column="1">
+      <widget class="QGraphicsView" name="View4"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QGraphicsView" name="View3"/>
+     </item>
+     <item row="0" column="0">
+      <widget class="QGraphicsView" name="View1"/>
+     </item>
+     <item row="0" column="1">
+      <widget class="QGraphicsView" name="View2"/>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QPushButton" name="start_button">
+    <property name="geometry">
+     <rect>
+      <x>590</x>
+      <y>500</y>
+      <width>93</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>start</string>
+    </property>
+   </widget>
    <widget class="QRadioButton" name="run_option">
     <property name="geometry">
      <rect>
-      <x>509</x>
+      <x>489</x>
       <y>420</y>
       <width>100</width>
       <height>20</height>
@@ -95,36 +106,25 @@
    <widget class="QPlainTextEdit" name="plainTextEdit">
     <property name="geometry">
      <rect>
-      <x>40</x>
+      <x>20</x>
       <y>390</y>
       <width>451</width>
       <height>151</height>
      </rect>
     </property>
    </widget>
-   <widget class="QWidget" name="gridLayoutWidget">
+   <widget class="QLabel" name="directory">
     <property name="geometry">
      <rect>
-      <x>39</x>
-      <y>29</y>
-      <width>721</width>
-      <height>331</height>
+      <x>510</x>
+      <y>390</y>
+      <width>181</width>
+      <height>16</height>
      </rect>
     </property>
-    <layout class="QGridLayout" name="gridLayout_3">
-     <item row="0" column="0">
-      <widget class="plotters" name="View1"/>
-     </item>
-     <item row="1" column="0">
-      <widget class="plotters" name="View3"/>
-     </item>
-     <item row="0" column="1">
-      <widget class="plotters" name="View2"/>
-     </item>
-     <item row="1" column="1">
-      <widget class="QGraphicsView" name="View4"/>
-     </item>
-    </layout>
+    <property name="text">
+     <string>Directory</string>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -132,20 +132,13 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>820</width>
+     <width>821</width>
      <height>24</height>
     </rect>
    </property>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>plotters</class>
-   <extends>QGraphicsView</extends>
-   <header>plotters.h</header>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

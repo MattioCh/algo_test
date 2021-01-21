@@ -35,7 +35,7 @@ def initialize(env):
 
 def handle_data(env, data):
     # Skip first 1000 days to get full windows
-    if env.day_count < 1000:
+    if env.day_count < 1001:
         env.day_count +=1
         return
 
