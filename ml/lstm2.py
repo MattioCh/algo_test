@@ -30,8 +30,7 @@ def initialize(context):
     context.time = 0
     context.asset = symbol(selected_stock)
     context.set_commission(commission.PerShare(cost=0.001, min_trade_cost=0))
-    context.lastpred = 0
-    
+
     # initialize model 
     model = Sequential()
 
@@ -44,7 +43,7 @@ def initialize(context):
     model.add(LSTM(units = units, return_sequences = True))
     model.add(Dropout(dropout_value))
 
-    model.add(LSTM(units = units))
+    model.add(LSTM(units = units)
     model.add(Dropout(dropout_value))
 
     model.add(Dense(units = 1))
@@ -59,13 +58,14 @@ def handle_data(context, data):
         return
     
     # training every 30 days 
-    #if ((context.time - training_period) % 30) == 0:
-    # training once 
-    if context.time == training_period:
+    if ((context.time - training_period) % 30) == 0:
         # getting the log returns 
-        price_history = data.history(context.asset, fields = "price", bar_count = training_period, frequency = "1d")
+        price_history = np.array(data.history(context.asset, fields = "price", bar_count = training_period, frequency = "1d"))
+        df = pd.DataFrame(data = price_history, columns = ['price'])
+        df['return'] = np.log(df['price'] / df['price'].shift(1))
+        ret = df['return'].dropna(inplace=True)
         sc = MinMaxScaler(feature_range=(0, 1))
-        scaled_data = sc.fit_transform(price_history.values.reshape(-1, 1))
+        scaled_data = sc.fit_transform(ret)
 
         # get training data into right shape for input 
         X_train = []
@@ -82,20 +82,11 @@ def handle_data(context, data):
     
     # using the model to trade 
     # reshape test_data but do not scale it 
-    test_data = data.history(context.asset, fields = 'price', bar_count = window, frequency = '1d')
-    test_data = np.reshape(test_data, (1, window, 1))
+    test_price = np.array(data.history(context.asset, fields = 'price', bar_count = window + 1, frequency = '1d'))
+    test_ret = np.log()
+    test_data = np.reshape(test_data, (test_data.shape[0], window, 1))
 
-    pred = context.model.predict(test_data)
-
-    # trading logic
-    if (pred > context.lastpred):
-        order_target_percent(context.asset, n_stocks_to_buy)
-    else:
-        order_target_percent(context.asset, -n_stocks_to_buy)
-    context.lastpred = pred
-
-    record(price = data.current(context.asset, 'price'))
-    record(pnl = context.portfolio.pnl)
+    pred = 
 
 def analyze(context, perf):
     fig, ax = plt.subplots(3, 1, sharex=True, figsize=[16,9])
