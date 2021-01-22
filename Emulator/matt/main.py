@@ -31,9 +31,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def select_file (self):
         dialog = QtWidgets.QFileDialog()
         self.file_path , file_type= dialog.getOpenFileName(None, "Select file",self.cwd,"(*.py)")
-        self.file_path = self.file_path.split("/")
+        path_string = self.file_path.split("/")
+        
         if self.file_path != "":
-            self.directory.setText("...  / "+ self.file_path[-1])
+            self.directory.setText("...  / "+ path_string[-1])
 
     def message(self, s):
         self.logger.appendPlainText(s)
@@ -53,7 +54,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.p.stateChanged.connect(self.handle_state)
             self.p.finished.connect(self.process_finished)
             # self.p.start("python3", [self.file_path])
-            self.p.start("python3", ["/Users/matthewchuang/Documents/GitHub/algo_test/Markov/algo.py"])
+            self.p.start("python3", [self.file_path])
         pass
 
     def handle_stderr(self):
