@@ -24,7 +24,7 @@
     <property name="geometry">
      <rect>
       <x>720</x>
-      <y>434</y>
+      <y>450</y>
       <width>31</width>
       <height>31</height>
      </rect>
@@ -59,30 +59,6 @@
      <string>clear</string>
     </property>
    </widget>
-   <widget class="QWidget" name="gridLayoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>30</y>
-      <width>721</width>
-      <height>331</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="gridLayout_3">
-     <item row="0" column="0">
-      <widget class="MplWidget" name="MplWidget1" native="true"/>
-     </item>
-     <item row="0" column="1">
-      <widget class="MplWidget" name="MplWidget2" native="true"/>
-     </item>
-     <item row="1" column="0">
-      <widget class="MplWidget" name="MplWidget3" native="true"/>
-     </item>
-     <item row="1" column="1">
-      <widget class="MplWidget" name="MplWidget4" native="true"/>
-     </item>
-    </layout>
-   </widget>
    <widget class="QPushButton" name="start_button">
     <property name="geometry">
      <rect>
@@ -96,21 +72,11 @@
      <string>start</string>
     </property>
    </widget>
-   <widget class="QPlainTextEdit" name="logger">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>390</y>
-      <width>421</width>
-      <height>151</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QLabel" name="directory">
     <property name="geometry">
      <rect>
       <x>500</x>
-      <y>444</y>
+      <y>460</y>
       <width>181</width>
       <height>21</height>
      </rect>
@@ -168,46 +134,14 @@
      </item>
     </layout>
    </widget>
-   <widget class="QLabel" name="output_dir">
+   <widget class="Viewer" name="plainTextEdit">
     <property name="geometry">
      <rect>
-      <x>500</x>
-      <y>476</y>
-      <width>181</width>
-      <height>20</height>
+      <x>80</x>
+      <y>310</y>
+      <width>371</width>
+      <height>141</height>
      </rect>
-    </property>
-    <property name="text">
-     <string>Output_dir: </string>
-    </property>
-   </widget>
-   <widget class="QToolButton" name="find_dir_button_2">
-    <property name="geometry">
-     <rect>
-      <x>720</x>
-      <y>473</y>
-      <width>31</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>...</string>
-    </property>
-   </widget>
-   <widget class="QPlainTextEdit" name="plainTextEdit">
-    <property name="geometry">
-     <rect>
-      <x>500</x>
-      <y>470</y>
-      <width>181</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="sizePolicy">
-     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-      <horstretch>0</horstretch>
-      <verstretch>0</verstretch>
-     </sizepolicy>
     </property>
    </widget>
   </widget>
@@ -217,7 +151,7 @@
      <x>0</x>
      <y>0</y>
      <width>853</width>
-     <height>26</height>
+     <height>24</height>
     </rect>
    </property>
   </widget>
@@ -225,10 +159,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>MplWidget</class>
-   <extends>QWidget</extends>
-   <header>mplwidget.h</header>
-   <container>1</container>
+   <class>Viewer</class>
+   <extends>QPlainTextEdit</extends>
+   <header>viewer.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

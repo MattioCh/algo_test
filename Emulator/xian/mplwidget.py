@@ -7,9 +7,9 @@ from  matplotlib.figure  import  Figure
 
 class  MplWidget ( QWidget ):
 
-    def  __init__ ( self ,  parent  =  None ):
-
-        QWidget . __init__ ( self ,  parent )
+    def  __init__ ( self , parent  ):
+        super(MplWidget , self ).__init__(parent)
+        # QWidget . __init__ ( self ,  parent )
 
         self . canvas  =  FigureCanvas ( Figure ())
 
