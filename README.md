@@ -203,3 +203,10 @@
 - The keras model works now, and probably needs better trading logic. 
   - Need to investigate more on volume trading, can be helpful.
 - Also the backtesting emulator works now, it can compile perfectly well with the output log. Yet, the main problem is still how to input the data source into the program....sigh...
+
+## 22/Jan
+
+- Not very efficient today but still some progress
+- Figure out some basic class structure that can be used in pyqt
+  - I think this is very important because figuring out the class structure can greatly improve the codability and readability of our code
+  - for compiling zipline in the emulator, I need to download the entire python in the future and make, make python to the directory and then install zipline in there, still haven't figured out how to change the default directory or to figure out how to build a package manager for zipline, can be very troublesome though... like very troublesome...
