@@ -2,6 +2,7 @@
 from zipline import run_algorithm
 from zipline.api import *
 from zipline.finance import commission, slippage
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -12,12 +13,12 @@ from graphviz import Digraph
 
 from tensorboard import TensorBoard
 from helper import find_Return, compare_array_with_float , put_into_bin, expected_value 
-
+from logger import logger
 def initialize(env):
     # set_max_leverage(3.3)
     set_benchmark(False)
     env.capital_base = 100000
-    env.sym = symbol("MTN")
+    env.sym = symbol("AAPL")
     env.day_count = 0
     env.floor_CL = 0.05
     env.cap_CL = 0.95
@@ -28,6 +29,7 @@ def initialize(env):
     env.long_short_percentage = 1
     env.hold_flag = 0
     env.tensorboard = TensorBoard(log_dir= "/Users/matthewchuang/Documents/GitHub/algo_test/Markov/test")
+    env.logger = logger()
     pass
 
 
@@ -61,22 +63,27 @@ def handle_data(env, data):
 
         #print
 
-        print("--------------------------------")
-        print(df.index[-1])
-        print("PNL: ", env.portfolio.pnl)
-        print(ev)
-        order  = get_open_orders(env.sym)
-        print(order)
-        if order != []:
-            print("Amount:", order[0]["amount"])
+        # print("--------------------------------")
+        # print(df.index[-1])
+        # print("PNL: ", env.portfolio.pnl)
+        # print(ev)
+        # order  = get_open_orders(env.sym)
+        # print(order)
+        # if order != []:
+        #     print("Amount:", order[0]["amount"])
         
-        env.tensorboard.log_algo(env)
+        # print(env.get_datetime())
+        # print(str(env.get_datetime()))
+
+        # env.tensorboard.log_algo(env)
 
 
 
         record(P=data.current(env.sym,"price"))
         record(EV = ev)
 
+        # logger(env)
+        env.logger.log(env)
         
 
 
@@ -101,7 +108,7 @@ result = run_algorithm(
     data_frequency = 'daily',  # Set data frequency
     bundle='daily-bundle' ) # Select bundle
 
-result.to_pickle("test4.pkl")
+result.to_csv("test.csv")
 
     #zipline run -f main.py -o test.csv -s 2000-11-18 -e 2021-1-4 -b custom-bundle --no-benchmark --capital-base 100
     #zipline run -f main.py -o test.csv -s 2000-11-18 -e 2021-1-4 -b custom-bundle --no-benchmark 
