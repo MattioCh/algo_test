@@ -103,4 +103,3 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 #         self.logger.setGeometry(QtCore.QRect(20, 390, 451, 151))
 #         self.logger.setObjectName("logger")
 
-# https://www.polyu.edu.hk/ife/corp/en/news_events/past_events/20344?view=list#gallery1-10

@@ -8,8 +8,8 @@ from  matplotlib.figure  import  Figure
 class  MplWidget ( QWidget ):
 
     def  __init__ ( self , parent  ):
-        super(MplWidget , self ).__init__(parent)
-        # QWidget . __init__ ( self ,  parent )
+        # super(MplWidget , self ).__init__(parent)
+        QWidget . __init__ ( self ,  parent )
 
         self . canvas  =  FigureCanvas ( Figure ())
 
@@ -18,3 +18,5 @@ class  MplWidget ( QWidget ):
 
         self . canvas . axes  =  self . canvas . figure . add_subplot ( 111 )
         self . setLayout ( vertical_layout )
+
+
