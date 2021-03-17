@@ -3,71 +3,78 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 import keras
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
-from keras.models import Sequential # neural network
-from keras.layers import Dense # final output 
+from keras.models import Sequential  # neural network
+from keras.layers import Dense  # final output
 from keras.layers import LSTM
-from keras.layers import Dropout # prevent overfitting 
+from keras.layers import Dropout  # prevent overfitting
 
-from zipline.api import record, symbol, order_target_percent, set_max_leverage
+from zipline.api import *
 from zipline import run_algorithm
 from zipline.finance import commission
 
-# parameters 
-window = 30 # length of window
-training_period = 3500 # we have 5000+ trading days
-selected_stock = 'AAPL'
+# parameters
+window = 10  # length of window
+training_period = 3500  # we have 5000+ trading days
+selected_stock = 'MSFT'
 n_stocks_to_buy = 1
 optimizer = 'adam'
 loss = 'mean_squared_error'
 units = 50
 dropout_value = 0.2
-num_epoch = 10
+num_epoch = 1
 batch_size = 32
+
 
 def initialize(context):
     context.time = 0
     context.asset = symbol(selected_stock)
     context.set_commission(commission.PerShare(cost=0.001, min_trade_cost=0))
     context.lastpred = 0
-    
-    # initialize model 
+    context.set_benchmark(False)
+    # initialize model
     model = Sequential()
 
-    model.add(LSTM(units = units, return_sequences = True, input_shape = (window, 1)))
+    model.add(LSTM(units=units, return_sequences=True, input_shape=(window, 1)))
     model.add(Dropout(dropout_value))
 
-    model.add(LSTM(units = units, return_sequences = True))
+    model.add(LSTM(units=units, return_sequences=True))
     model.add(Dropout(dropout_value))
 
-    model.add(LSTM(units = units, return_sequences = True))
+    model.add(LSTM(units=units, return_sequences=True))
     model.add(Dropout(dropout_value))
 
-    model.add(LSTM(units = units))
+    model.add(LSTM(units=units))
     model.add(Dropout(dropout_value))
 
-    model.add(Dense(units = 1))
+    model.add(Dense(units=1))
 
-    model.compile(optimizer = optimizer, loss = loss)
+    model.compile(optimizer=optimizer, loss=loss)
 
     context.model = model
+
+    context.sc = StandardScaler()
+
 
 def handle_data(context, data):
     context.time += 1
     if context.time < training_period:
         return
-    
-    # training every 30 days 
-    #if ((context.time - training_period) % 30) == 0:
-    # training once 
-    if context.time == training_period:
-        # getting the log returns 
-        price_history = data.history(context.asset, fields = "price", bar_count = training_period, frequency = "1d")
-        sc = MinMaxScaler(feature_range=(0, 1))
-        scaled_data = sc.fit_transform(price_history.values.reshape(-1, 1))
+    print("hi")
+    # training every 30 days
 
-        # get training data into right shape for input 
+    if ((context.time % 365) == 0 or context.time == training_period):
+        # training once
+        # if context.time == training_period:
+        # getting the log returns
+        price_history = data.history(
+            context.asset, fields="price", bar_count=context.time, frequency="1d")
+
+        scaled_data = context.sc.fit_transform(
+            price_history.values.reshape(-1, 1))
+
+        # get training data into right shape for input
         X_train = []
         y_train = []
         for i in range(window, len(data)):
@@ -78,27 +85,34 @@ def handle_data(context, data):
         X_train = np.reshape(X_train, (X_train.shape[0], window, 1))
 
         # fitting the model
-        context.model.fit(X_train, y_train, epochs = num_epoch, batch_size = batch_size)
-    
-    # using the model to trade 
-    # reshape test_data but do not scale it 
-    test_data = data.history(context.asset, fields = 'price', bar_count = window, frequency = '1d')
-    test_data = np.reshape(test_data, (1, window, 1))
+        context.model.fit(X_train, y_train, epochs=num_epoch,
+                          batch_size=batch_size)
 
-    pred = context.model.predict(test_data)
+    # using the model to trade
+    # reshape test_data but do not scale it
+    test_data = data.history(
+        context.asset, fields='price', bar_count=window, frequency='1d')
+    test_data1 = np.reshape(test_data, (1, window, 1))
 
+    pred = context.model.predict(test_data1)
+    real = context.sc.transform(test_data)
+    print(real)
+    print(pred)
+    print("------------------------------")
     # trading logic
-    if (pred > context.lastpred):
+    if (pred > real):
         order_target_percent(context.asset, n_stocks_to_buy)
     else:
-        order_target_percent(context.asset, -n_stocks_to_buy)
+        order_target_percent(context.asset, 0)
+
     context.lastpred = pred
 
-    record(price = data.current(context.asset, 'price'))
-    record(pnl = context.portfolio.pnl)
+    record(price=data.current(context.asset, 'price'))
+    record(pnl=context.portfolio.pnl)
+
 
 def analyze(context, perf):
-    fig, ax = plt.subplots(3, 1, sharex=True, figsize=[16,9])
+    fig, ax = plt.subplots(3, 1, sharex=True, figsize=[16, 9])
 
     perf.portfolio_value.plot(ax=ax[0])
     ax[0].set_ylabel('portfolio value in $')
@@ -111,19 +125,22 @@ def analyze(context, perf):
 
     plt.legend()
     plt.show()
- 
+
+
 start = pd.Timestamp('2000-11-18', tz='utc')
 end = pd.Timestamp('2021-1-4', tz='utc')
 
 result = run_algorithm(
-    start=start, # Set start
+    start=start,  # Set start
     end=end,  # Set end
     initialize=initialize,
-    handle_data=handle_data, # Define startup function
-    capital_base=100, # Set initial capital
-    data_frequency = 'daily',  # Set data frequency
-    bundle='custom-bundle2' # Select bundle
-) 
+    handle_data=handle_data,  # Define startup function
+    capital_base=10000,  # Set initial capital
+    data_frequency='daily',  # Set data frequency
+    bundle='daily-bundle'  # Select bundle
+
+
+)
 
 result.to_pickle("test1.pkl")
 
